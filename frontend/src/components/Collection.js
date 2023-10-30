@@ -4,9 +4,13 @@ export function Collection({ collectionAddress, name, symbol, nfts, mintNft }) {
     return (
         <div>
             <h5>Collection {name} {symbol} ({collectionAddress})</h5>
-            {nfts.map((n, index) => {
-                return <img alt={n.address} key={index} src={n.tokenUri} />
-            })}
+            <div className="row">
+                <div className="col-12">
+                    {nfts.map((n, index) => {
+                        return <img className="img-thumbnail" alt={n.address} key={index} src={n.tokenUri} />
+                    })}
+                </div>
+            </div>
 
             <form
                 onSubmit={(event) => {

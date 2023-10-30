@@ -32,7 +32,6 @@ export class Dapp extends React.Component {
       selectedAddress: undefined,
       balance: undefined,
       collections: [],
-      nfts: [],
       // The ID about transactions being sent, and any possible error with them
       txBeingSent: undefined,
       transactionError: undefined,
@@ -82,11 +81,6 @@ export class Dapp extends React.Component {
 
           <hr/>
 
-          {/*<div className="row">*/}
-          {/*  <div className="col-12">*/}
-          {/*    {this.state.collections}*/}
-          {/*  </div>*/}
-          {/*</div>*/}
           <div className="row">
             <div className="col-12">
               {/*
@@ -123,15 +117,13 @@ export class Dapp extends React.Component {
 
           <div className="row">
             <div className="col-12">
-
               {this.state.collections.map((c, index) => {
-                const nfts = this.state.nfts.filter(n => n.address === c.address)
                 return <Collection
                     key={index}
                     collectionAddress={c.address}
                     name={c.name}
                     symbol={c.symbol}
-                    nfts={nfts}
+                    nfts={c.nfts}
                     mintNft={(collectionAddress) =>
                     this._mintNft(collectionAddress)
                 }></Collection>
@@ -215,33 +207,33 @@ export class Dapp extends React.Component {
     this._pollDataInterval = undefined;
   }
 
+  async fetchJson(utl) {
+    const response = await fetch(utl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+
+    return response.json()
+  }
+
   async _pollServer() {
+
+    const nfts = await this.fetchJson(`${API_URL}/nfts`)
+
+
     // fetch collections array
-    const response = await fetch(`${API_URL}/collections`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+    const collections = await this.fetchJson(`${API_URL}/collections`)
+
+
+    const collectionsWithNfts = collections.map(c => {
+      return {...c, nfts: nfts.filter(n => n.address === c.address)}
     })
 
-    const collections = await response.json();
-
-    // console.log(collections)
-    this.setState({ collections: collections });
-
-
-    // fetch nfts array
-    const response2 = await fetch(`${API_URL}/nfts`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    })
-
-    const nfts = await response2.json();
 
     // console.log(nfts)
-    this.setState({ nfts: nfts });
+  this.setState({ collections: collectionsWithNfts });
   }
 
 
@@ -295,21 +287,28 @@ export class Dapp extends React.Component {
   }
 
   async _mintNft(collectionAddress) {
-    this._dismissTransactionError();
+    try {
+      this._dismissTransactionError();
 
-    const tx = await this._collectionFactory.mint(collectionAddress);
+      const tx = await this._collectionFactory.mint(collectionAddress);
 
-    this.setState({ txBeingSent: tx.hash });
+      this.setState({txBeingSent: tx.hash});
 
-    const receipt = await tx.wait();
+      const receipt = await tx.wait();
 
-    if (receipt.status === 0) {
-      throw new Error("Transaction failed");
-    }
+      if (receipt.status === 0) {
+        throw new Error("Transaction failed");
+      }
+    } catch (error) {
+      if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
+        return;
+      }
 
-    // const nft = receipt.events[1].args
-    // console.log(nft)
-
+      console.error(error);
+      this.setState({ transactionError: error });
+    } finally {
+        this.setState({ txBeingSent: undefined });
+      }
   }
 
   // This method just clears part of the state.

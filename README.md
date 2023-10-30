@@ -20,7 +20,7 @@ npm run node
 npm run deploy
 ```
 
-5. Get ETH for testing
+5. Send 1 ETH to testing address
 ```
 npx hardhat --network localhost faucet 0xaaabbbccc
 ```
