@@ -1,9 +1,4 @@
-// This is an example test file. Hardhat will run every *.js file in `test/`,
-// so feel free to add new ones.
-
-
 const { expect } = require("chai");
-
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 describe("CollectionFactory contract", function () {
@@ -13,7 +8,6 @@ describe("CollectionFactory contract", function () {
     const [owner, addr1, addr2] = await ethers.getSigners();
 
     const hardhatCollectionFactory = await CollectionFactory.deploy();
-    // console.log(hardhatToken)
 
     await hardhatCollectionFactory.deployed();
 
@@ -31,10 +25,10 @@ describe("CollectionFactory contract", function () {
   });
 
   describe("Collection", function () {
-    it("Should create Collection", async function () {
-        const { hardhatCollectionFactory, owner, addr1, addr2 } = await loadFixture(deployFixture);
+    it("Should create Collection and mint NFT", async function () {
+        const { hardhatCollectionFactory, addr1, addr2 } = await loadFixture(deployFixture);
 
-        const transaction = await hardhatCollectionFactory.createCollection('XXX', 'My XXX nft')
+        const transaction = await hardhatCollectionFactory.createCollection('My XXX nft', 'XXX')
         const transactionResult = await transaction.wait()
         const createCollectionEvent = transactionResult.events[0]
 
@@ -42,20 +36,24 @@ describe("CollectionFactory contract", function () {
 
         const collectionAddress = createCollectionEvent.args.collection
 
-        // console.log(collection)
-        console.log(collectionAddress)
-
         const collectionContract = await ethers.getContractAt("Collection", collectionAddress);
         expect(await collectionContract.totalSupply()).to.equal(0);
 
-        // await collectionContract.mint()
-        const tx = await hardhatCollectionFactory.mint(collectionAddress)
+        const CollectionFactory = await ethers.getContractAt("CollectionFactory", hardhatCollectionFactory.address, addr1);
+
+        const tx = await CollectionFactory.mint(collectionAddress)
         const txResult = await tx.wait()
-        console.log(txResult.events[1].args)
+
+        const mintedEvent = txResult.events[1]
+        expect(mintedEvent).to.haveOwnProperty('event', 'TokenMinted')
+        expect(mintedEvent.args).to.haveOwnProperty('recipient', addr1.address)
+        expect(mintedEvent.args).to.haveOwnProperty('tokenUri', 'https://ui-avatars.com/api/?name=0')
+        expect(mintedEvent.args.tokenId.toString()).to.equal('0')
 
         expect(await collectionContract.totalSupply()).to.equal(1);
-        expect(await collectionContract.ownerOf(0)).to.equal(owner.address);
-
+        expect(await collectionContract.ownerOf(0)).to.equal(addr1.address);
+        expect(await collectionContract.name()).to.equal('My XXX nft');
+        expect(await collectionContract.symbol()).to.equal('XXX');
     });
   })
 
