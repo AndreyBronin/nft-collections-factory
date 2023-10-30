@@ -17,9 +17,9 @@ contract CollectionFactory is Ownable {
     function mint(Collection c) external {
         c.mint();
 
-        emit TokenMinted(address(c), tx.origin, c.totalSupply()-1, c.tokenURI(c.totalSupply()-1));
+        uint256 tokenId = c.totalSupply()-1;
+        emit TokenMinted(address(c), tx.origin, tokenId, c.tokenURI(tokenId));
     }
-
 }
 
 

@@ -6,7 +6,6 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 
 contract Collection is ERC721Enumerable {
     constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
-
     }
 
     function mint() external {
