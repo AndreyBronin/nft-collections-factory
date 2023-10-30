@@ -1,3 +1,7 @@
+# Demo
+
+https://github.com/AndreyBronin/nft-collections-factory/assets/983761/d272fa3d-69f4-4bb1-b0e2-6c477acaea6f
+
 # How to launch demo
 
 1. Install deps
